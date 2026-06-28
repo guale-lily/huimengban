@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>生成应用图标</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    .icon-preview { display: flex; gap: 20px; flex-wrap: wrap; margin: 20px 0; align-items: flex-end; }
+    .icon-item { text-align: center; }
+    .icon-item canvas { border: 1px solid #ddd; border-radius: 8px; }
+    .icon-item p { margin: 5px 0; font-size: 12px; color: #666; }
+    button { padding: 10px 20px; background: #fde1f3; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; color: #9caad6; font-weight: 600; }
+    button:hover { background: #fbc8e0; }
+    .section { margin-bottom: 30px; }
+    h2 { color: #9caad6; font-size: 18px; }
+  </style>
+</head>
+<body>
+  <h1>绘梦板 - 应用图标生成器</h1>
+  
+  <div class="section">
+    <h2>版本一：粉色背景 + 白色头像（推荐）</h2>
+    <p>背景为应用主题粉色，中间是游客头像</p>
+    <button onclick="downloadAllIcons('pink')">下载全部图标（粉色背景）</button>
+    <div class="icon-preview" id="icon-preview-pink"></div>
+  </div>
+  
+  <div class="section">
+    <h2>版本二：纯白背景</h2>
+    <p>背景为白色，只有游客头像</p>
+    <button onclick="downloadAllIcons('white')">下载全部图标（白色背景）</button>
+    <div class="icon-preview" id="icon-preview-white"></div>
+  </div>
+
+  <script>
+    function drawGuestAvatar(ctx, centerX, centerY, radius, strokeColor) {
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+      ctx.fill();
+      
+      ctx.strokeStyle = strokeColor;
+      ctx.lineWidth = radius * 0.07;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+      ctx.stroke();
+      
+      const eyeWidth = radius * 0.22;
+      const eyeHeight = radius * 0.56;
+      const eyeY = centerY - radius * 0.15;
+      const eyeSpacing = radius * 0.35;
+      const eyeRadius = radius * 0.07;
+      
+      ctx.strokeStyle = strokeColor;
+      ctx.lineWidth = radius * 0.05;
+      
+      function drawRoundedRect(x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+      }
+      
+      drawRoundedRect(centerX - eyeSpacing - eyeWidth / 2, eyeY - eyeHeight / 2, eyeWidth, eyeHeight, eyeRadius);
+      ctx.stroke();
+      
+      drawRoundedRect(centerX + eyeSpacing - eyeWidth / 2, eyeY - eyeHeight / 2, eyeWidth, eyeHeight, eyeRadius);
+      ctx.stroke();
+      
+      const noseRadius = radius * 0.09;
+      const noseY = centerY + radius * 0.18;
+      
+      ctx.fillStyle = strokeColor;
+      ctx.beginPath();
+      ctx.arc(centerX, noseY, noseRadius, 0, Math.PI * 2);
+      ctx.fill();
+      
+      const cheekY = noseY + radius * 0.15;
+      const cheekRx = radius * 0.25;
+      const cheekRy = radius * 0.08;
+      const cheekOffset = radius * 0.52;
+      
+      ctx.fillStyle = 'rgba(255, 182, 193, 0.4)';
+      
+      ctx.beginPath();
+      ctx.ellipse(centerX - cheekOffset, cheekY, cheekRx, cheekRy, 0, 0, Math.PI * 2);
+      ctx.fill();
+      
+      ctx.beginPath();
+      ctx.ellipse(centerX + cheekOffset, cheekY, cheekRx, cheekRy, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    
+    function generateIcon(size, bgType) {
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      
+      const centerX = size / 2;
+      const centerY = size / 2;
+      
+      if (bgType === 'pink') {
+        const gradient = ctx.createRadialGradient(
+          centerX, centerY - size * 0.3, 0,
+          centerX, centerY, size / 2
+        );
+        gradient.addColorStop(0, '#fde1f3');
+        gradient.addColorStop(1, '#fbc8e0');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, size, size);
+      } else {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, size, size);
+      }
+      
+      const avatarRadius = size * 0.35;
+      const strokeColor = '#9caad6';
+      
+      drawGuestAvatar(ctx, centerX, centerY, avatarRadius, strokeColor);
+      
+      return canvas;
+    }
+    
+    const sizes = [
+      { size: 48, name: 'mdpi' },
+      { size: 72, name: 'hdpi' },
+      { size: 96, name: 'xhdpi' },
+      { size: 144, name: 'xxhdpi' },
+      { size: 192, name: 'xxxhdpi' },
+      { size: 512, name: 'playstore' }
+    ];
+    
+    function showPreview() {
+      const previewPink = document.getElementById('icon-preview-pink');
+      const previewWhite = document.getElementById('icon-preview-white');
+      
+      sizes.forEach(({ size, name }) => {
+        const canvasPink = generateIcon(size, 'pink');
+        const divPink = document.createElement('div');
+        divPink.className = 'icon-item';
+        divPink.appendChild(canvasPink);
+        const pPink = document.createElement('p');
+        pPink.textContent = `${name} (${size}x${size})`;
+        divPink.appendChild(pPink);
+        previewPink.appendChild(divPink);
+        
+        const canvasWhite = generateIcon(size, 'white');
+        const divWhite = document.createElement('div');
+        divWhite.className = 'icon-item';
+        divWhite.appendChild(canvasWhite);
+        const pWhite = document.createElement('p');
+        pWhite.textContent = `${name} (${size}x${size})`;
+        divWhite.appendChild(pWhite);
+        previewWhite.appendChild(divWhite);
+      });
+    }
+    
+    function downloadAllIcons(bgType) {
+      sizes.forEach(({ size, name }) => {
+        const canvas = generateIcon(size, bgType);
+        const link = document.createElement('a');
+        link.download = `ic_launcher_${name}_${bgType}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      });
+      
+      alert('所有图标已开始下载！请查看下载文件夹。');
+    }
+    
+    showPreview();
+  </script>
+</body>
+</html>
